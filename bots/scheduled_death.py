@@ -16,7 +16,11 @@ class BotPlayer(Player):
         self.trc = RobotController(None, None)
 
         self.path_length = len(map.path)
-        self.death_time = self.chooose_goal(path_length=self.path_length,goal=3000)
+        self.schedule = {}
+        self.send_amounts = {}
+        self.death_time = self.chooose_goal(path_length=self.path_length,goal=5000)
+
+        
 
     def get_best_200_debris_cost(self,speed):
         
@@ -43,6 +47,12 @@ class BotPlayer(Player):
             min_speed = max(1,np.floor((goal_turn - turn) / path_length))
             max_200_damage = self.get_best_200_debris_cost(min_speed)
             if money >= 200:
+                self.schedule[min_speed] = turn
+                if min_speed in self.send_amounts:
+                    self.send_amounts[min_speed] += 1
+                else:
+                    self.send_amounts[min_speed]= 1
+                
                 money -= 200
                 total_damage += max_200_damage
             turn+=1
@@ -52,6 +62,7 @@ class BotPlayer(Player):
                 turn += skip_turns
                 money += 10*skip_turns
 
+
         return total_damage >= goal
 
     
@@ -59,7 +70,7 @@ class BotPlayer(Player):
         min_goal_turn = 150
         max_goal_turn = 1200
 
-        while max_goal_turn - min_goal_turn >= 10:
+        while max_goal_turn - min_goal_turn > 1:
             mid_goal_turn = (min_goal_turn + max_goal_turn) // 2
             if self.attempt_kill(mid_goal_turn,path_length=path_length,goal=goal):
                 max_goal_turn = mid_goal_turn
@@ -81,10 +92,14 @@ class BotPlayer(Player):
                     rc.send_debris(1, 51)
             else:
                 min_speed = max(1,np.floor((self.death_time - self.turn) / self.path_length))
+
+
                 
                 max_200_damage = self.get_best_200_debris_cost(min_speed)
                 min_speed = int(min_speed)
-                if rc.can_send_debris(min_speed,max_200_damage ):
+                
+                if self.schedule[min_speed] <= self.turn + self.send_amounts[min_speed] and rc.can_send_debris(min_speed,max_200_damage ):
+                    print(f"sending at cooldown {min_speed} for {max_200_damage} impact at time ", self.turn + min_speed * self.path_length)
                     rc.send_debris(min_speed,max_200_damage)
 
         
