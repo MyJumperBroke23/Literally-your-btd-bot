@@ -7,6 +7,7 @@ from src.map import Map
 class BotPlayer(Player):
     def __init__(self, map: Map):
         self.map = map
+        self.createRangeDict(map,60)
 
     def play_turn(self, rc: RobotController):
         self.build_towers(rc)
