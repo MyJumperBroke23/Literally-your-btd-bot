@@ -26,8 +26,8 @@ class BotPlayer(Player):
         badness = 0
         for d in debris:
             badness += d.health * (21-d.total_cooldown)
-            if d.total_cooldown > 20:
-                print(d.total_cooldown)
+            # if d.total_cooldown > 20:
+            #     print(d.total_cooldown)
         
         for i in range(self.farm_pointer, -1, -1):
             k = self.gun_spots[i]
@@ -37,7 +37,7 @@ class BotPlayer(Player):
             else:
                 break
 
-        print(badness / len(self.map.path), self.expected_shots(rc))
+        # print(badness / len(self.map.path), self.expected_shots(rc))
         if badness / len(self.map.path) > self.expected_shots(rc):
             
             # if rc.get_balance(rc.get_ally_team()) < 1000:

@@ -16,8 +16,7 @@ class BotPlayer(Player):
         self.trc = RobotController(None, None)
 
         self.path_length = len(map.path)
-        self.death_time = self.chooose_goal(path_length=self.path_length)
-        print("death time ", self.death_time)
+        self.death_time = self.chooose_goal(path_length=self.path_length,goal=3000)
 
     def get_best_200_debris_cost(self,speed):
         
@@ -36,12 +35,12 @@ class BotPlayer(Player):
         return min_health
 
 
-    def attempt_kill(self,goal_turn,path_length,goal=3000):
+    def attempt_kill(self,goal_turn,path_length,goal):
         total_damage = 0
         turn = 0
         money = 1500
         while(total_damage < goal and turn < goal_turn):
-            min_speed = np.ceil((goal_turn - turn) / path_length)
+            min_speed = max(1,np.floor((goal_turn - turn) / path_length))
             max_200_damage = self.get_best_200_debris_cost(min_speed)
             if money >= 200:
                 money -= 200
@@ -56,7 +55,7 @@ class BotPlayer(Player):
         return total_damage >= goal
 
     
-    def chooose_goal(self,path_length,goal=3000):
+    def chooose_goal(self,path_length,goal):
         min_goal_turn = 150
         max_goal_turn = 1200
 
@@ -66,17 +65,26 @@ class BotPlayer(Player):
                 max_goal_turn = mid_goal_turn
             else:
                 min_goal_turn = mid_goal_turn
+                
 
         return max_goal_turn 
         
 
     
     def play_turn(self, rc: RobotController):
+        # print("hello we are calling")
+
         self.turn+=1
         if rc.get_balance(rc.get_ally_team()) >= 200:
-            min_speed = np.ceil((self.death_time - self.turn) / self.path_length)
-            max_200_damage = self.get_best_200_debris_cost(min_speed)
-            if rc.can_send_debris(max_200_damage, min_speed):
-                rc.send_debris(max_200_damage,min_speed)
+            if self.turn>self.death_time:
+                if rc.can_send_debris(1,51):
+                    rc.send_debris(1, 51)
+            else:
+                min_speed = max(1,np.floor((self.death_time - self.turn) / self.path_length))
+                
+                max_200_damage = self.get_best_200_debris_cost(min_speed)
+                min_speed = int(min_speed)
+                if rc.can_send_debris(min_speed,max_200_damage ):
+                    rc.send_debris(min_speed,max_200_damage)
 
         
