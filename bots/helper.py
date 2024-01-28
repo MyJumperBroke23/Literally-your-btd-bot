@@ -39,10 +39,6 @@ def calculate_new_resource_distribution(map: Map):
 
 
 
-
-
-
-
 # Given a map, create a dict that maps (row,col,range) -> all path squares if shooter, all non tile squares if intensifier
 def createRangeDict(map: Map, radius = 4):
     rangeDict = dict()
@@ -65,6 +61,7 @@ def createRangeDict(map: Map, radius = 4):
     path = [[1 if map.is_path(i,j) else 0 for j in range(map.width)] for i in range(map.height)]
     path = np.array(path)
     result = ndimage.convolve(path, mask, mode='constant', cval=0.0)
+    return result
 
 
 
