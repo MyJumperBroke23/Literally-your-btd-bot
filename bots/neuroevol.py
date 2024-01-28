@@ -20,6 +20,7 @@ class BotPlayer(Player):
         _, self.bombtiles = self.count_target_tiles_within_radius(map.width, map.height, map.path, 2)
         result, self.sniptiles = self.count_target_tiles_within_radius(map.width, map.height, map.path, 10)
 
+        print(map.path)
         rem = []
         for i in self.sniptiles:
             # self.sniptiles[i] -= self.bombtiles[i]

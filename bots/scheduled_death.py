@@ -13,18 +13,20 @@ class BotPlayer(Player):
 
         self.BUMRUSH = False
         self.turn = 0
+        self.trc = RobotController(None, None)
 
         self.path_length = len(map.path)
         self.death_time = self.chooose_goal(path_length=self.path_length)
-
+        print("death time ", self.death_time)
 
     def get_best_200_debris_cost(self,speed):
+        
         min_health = 45
         max_health = 190
 
         while min_health < max_health:
             mid_health = (min_health + max_health + 1) // 2 
-            cost = RobotController.get_debris_cost(cooldown=speed, health=mid_health)
+            cost = self.trc.get_debris_cost(speed, mid_health)
 
             if cost <= 200:
                 min_health = mid_health 
@@ -39,7 +41,7 @@ class BotPlayer(Player):
         turn = 0
         money = 1500
         while(total_damage < goal and turn < goal_turn):
-            min_speed = np.ceil(goal_turn - turn / path_length)
+            min_speed = np.ceil((goal_turn - turn) / path_length)
             max_200_damage = self.get_best_200_debris_cost(min_speed)
             if money >= 200:
                 money -= 200
@@ -58,20 +60,23 @@ class BotPlayer(Player):
         min_goal_turn = 150
         max_goal_turn = 1200
 
-        while max_goal_turn - min_goal_turn <= 10:
+        while max_goal_turn - min_goal_turn >= 10:
             mid_goal_turn = (min_goal_turn + max_goal_turn) // 2
             if self.attempt_kill(mid_goal_turn,path_length=path_length,goal=goal):
                 max_goal_turn = mid_goal_turn
             else:
                 min_goal_turn = mid_goal_turn
+
+        return max_goal_turn 
         
 
     
     def play_turn(self, rc: RobotController):
+        self.turn+=1
         if rc.get_balance(rc.get_ally_team()) >= 200:
-            min_speed = np.ceil(self.death_time - self.turn / self.path_length)
+            min_speed = np.ceil((self.death_time - self.turn) / self.path_length)
             max_200_damage = self.get_best_200_debris_cost(min_speed)
-            if rc.can_send_debris(min_speed,max_200_damage):
-                rc.send_debris(min_speed,max_200_damage)
+            if rc.can_send_debris(max_200_damage, min_speed):
+                rc.send_debris(max_200_damage,min_speed)
 
         
