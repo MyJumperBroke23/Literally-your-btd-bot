@@ -16,6 +16,7 @@ class BotPlayer(Player):
         self.farm_spots = sorted(gunners_dict, key=lambda x: gunners_dict[x])
         self.bomb_spots = sorted(gunners_dict, key=lambda x: -bombs_dict[x])
         self.toggle =False
+        self.turn = 0
     
     def play_turn(self, rc: RobotController):
         # if len(self.bomb_spots) > 0:
@@ -33,10 +34,12 @@ class BotPlayer(Player):
         #             self.farm_spots.pop()
         #             break
         
+        self.turn += 1
         if rc.get_balance(rc.get_ally_team()) > 12000:
+            print(self.turn)
             self.toggle = True
         if self.toggle and rc.get_balance(rc.get_ally_team()) > 253:
-            rc.send_debris(2, 51)
+            rc.send_debris(1, 51)
         self.towers_attack(rc)
 
         return

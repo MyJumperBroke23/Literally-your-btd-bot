@@ -5,7 +5,6 @@ from src.player import Player
 from src.map import Map
 from scipy.spatial import cKDTree
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 class BotPlayer(Player):
@@ -17,7 +16,7 @@ class BotPlayer(Player):
         self.turns = 0
         self.bombs = 0
         self.snipes = 0
-
+        self.farm = True
         _, self.bombtiles = self.count_target_tiles_within_radius(map.width, map.height, map.path, 2)
         result, self.sniptiles = self.count_target_tiles_within_radius(map.width, map.height, map.path, 10)
 
@@ -42,8 +41,8 @@ class BotPlayer(Player):
 
 
         # self.bestiles = sorted(self.bombtiles, key=lambda x: x[1], reverse=True)
-        plt.imshow(np.flipud(result))
-        plt.show()
+        # plt.imshow(np.flipud(result))
+        # plt.show()
         self.bestiles = sorted(self.bombtiles.items(), key=lambda item: item[1], reverse=True)
         self.bestsnipes = sorted(self.sniptiles.items(), key=lambda item: item[1], reverse=True)
         
@@ -92,25 +91,34 @@ class BotPlayer(Player):
     #                 print("deleted")
 
             
-    def least_fit(self, rc):
-        if self.turns % 100 == 0:
-            towers = rc.get_towers(rc.get_ally_team())
-            for tower in towers:
-                loc = (tower.x, tower.y)
-                if self.amt[loc] < self.turns/100:
-                    self.notower.add(loc)
-                    self.addtower.remove(loc)
-                    rc.sell_tower(tower.id)
+    # def least_fit(self, rc):
+    #     if self.turns % 100 == 0:
+    #         towers = rc.get_towers(rc.get_ally_team())
+    #         for tower in towers:
+    #             loc = (tower.x, tower.y)
+    #             if self.amt[loc] < self.turns/100:
+    #                 self.notower.add(loc)
+    #                 self.addtower.remove(loc)
+    #                 rc.sell_tower(tower.id)
 
 
     def build_towers(self, rc: RobotController):
         # x = random.randint(0, self.map.width-1)
         # y = random.randint(0, self.map.height-1)
-        tower = random.randint(1, 2) # randomly select a tower
+        tower = random.randint(1, 3) # randomly select a tower
         # print(self.bestiles[0])
         # print(rc.can_build_tower(TowerType.BOMBER, 0,29))
         
-        print(self.snipes > self.bombs*3)
+        # print(self.snipes > self.bombs*3)
+
+        # if self.farm:
+        #     # for i in range(len(self.bestsnipes)):
+        #         # (y,x) = self.bestsnipes[-1][0]
+        #     if rc.can_build_tower(TowerType.SOLAR_FARM, 0,0):
+        #         rc.build_tower(TowerType.SOLAR_FARM, 0,0)
+        #         self.farm = False
+        #     return
+
         if self.snipes > self.bombs*3 or tower == 1:
             for (y,x), _ in self.bestiles:
                 if rc.can_build_tower(TowerType.BOMBER, x,y):
@@ -118,14 +126,16 @@ class BotPlayer(Player):
                     self.bombs += 1
 
         else:
-            for (y,x), _ in self.bestsnipes:
+            for (y,x), _ in self.bestiles:
                 # px = random.randint(-3, 3)
                 # py = random.randint(-3, 3)
-
                 if rc.can_build_tower(TowerType.GUNSHIP, x,y):
                     rc.build_tower(TowerType.GUNSHIP, x,y)
                     self.snipes += 1
 
+        # else:
+        #     if rc.get_balance(rc.get_ally_team()) > 57:
+        #         rc.send_debris(1, 26)
             
             # print(x,y)
             # if (rc.can_build_tower(TowerType.GUNSHIP, x, y) and 
@@ -156,7 +166,7 @@ class BotPlayer(Player):
                 if tower.type == TowerType.GUNSHIP:
                 #     self.amt[(tower.x, tower.y)] += 25
 
-                    rc.auto_snipe(tower.id, SnipePriority.STRONG)
+                    rc.auto_snipe(tower.id, SnipePriority.WEAK)
                     
                 elif tower.type == TowerType.BOMBER:
                     # self.amt[(tower.x, tower.y)] += 6*num_debri
