@@ -18,7 +18,26 @@ class BotPlayer(Player):
         self.bombs = 0
         self.snipes = 0
 
-        result, self.bombtiles = self.count_target_tiles_within_radius(map.width, map.height, map.path, 2)
+        _, self.bombtiles = self.count_target_tiles_within_radius(map.width, map.height, map.path, 2)
+        result, self.sniptiles = self.count_target_tiles_within_radius(map.width, map.height, map.path, 10)
+
+        rem = []
+        for i in self.sniptiles:
+            # self.sniptiles[i] -= self.bombtiles[i]
+            if self.bombtiles[i] > 0:
+                rem.append(i)
+
+        for i in rem:
+            del self.sniptiles[i]
+
+        # print(set().difference(set()))
+        # print(len(self.sniptiles.keys()), len(self.bombtiles.keys()))
+        # diff = set(self.sniptiles.keys()).difference(set(self.bombtiles.keys()))
+        # print(diff)
+        # for i in self.sniptiles:
+        #     if i not in diff:
+                # print('not')
+        #         del self.sniptiles[i]
 
 
 
@@ -26,9 +45,8 @@ class BotPlayer(Player):
         plt.imshow(np.flipud(result))
         plt.show()
         self.bestiles = sorted(self.bombtiles.items(), key=lambda item: item[1], reverse=True)
-        # print(self.bestiles)
-        # print(self.bestiles[0])
-        # print(self.bombtiles[self.bestiles[0]])
+        self.bestsnipes = sorted(self.sniptiles.items(), key=lambda item: item[1], reverse=True)
+        
 
 
 
@@ -100,12 +118,12 @@ class BotPlayer(Player):
                     self.bombs += 1
 
         else:
-            for (y,x), _ in self.bestiles:
-                px = random.randint(-3, 3)
-                py = random.randint(-3, 3)
+            for (y,x), _ in self.bestsnipes:
+                # px = random.randint(-3, 3)
+                # py = random.randint(-3, 3)
 
-                if rc.can_build_tower(TowerType.GUNSHIP, px+x, py+y):
-                    rc.build_tower(TowerType.GUNSHIP, px+x, py+y)
+                if rc.can_build_tower(TowerType.GUNSHIP, x,y):
+                    rc.build_tower(TowerType.GUNSHIP, x,y)
                     self.snipes += 1
 
             
