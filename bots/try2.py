@@ -60,19 +60,25 @@ class BotPlayer(Player):
         if rc.get_balance(rc.get_ally_team()) < 1000:
             self.towers_attack(rc)
             return 
-        # if self.bum_rush:
-        #     if rc.get_balance(rc.get_ally_team()) > 100000:
-        #         rc.send_debris(4, 501)
-        #     elif rc.get_balance(rc.get_ally_team()) > 2000:
-        #         rc.send_debris(1,151)
-        #     self.towers_attack(rc)
-        #     return
-        
-        # if np.sqrt(0.8 * self.farm_stack + rc.get_balance(rc.get_ally_team())) >= np.sqrt(len(rc.get_towers(rc.get_enemy_team())) * 1500):
-        #     self.sell_farms(rc)
-        #     self.bum_rush = True
-        #     self.towers_attack(rc)
-        #     return
+        if self.bum_rush:
+            if rc.get_balance(rc.get_ally_team()) > 100000:
+                rc.send_debris(4, 501)
+            elif rc.get_balance(rc.get_ally_team()) > 2000:
+                rc.send_debris(1,151)
+            self.towers_attack(rc)
+            return
+        enemy_power = 0
+        for t in rc.get_towers(rc.get_enemy_team()):
+            if t.type == TowerType.BOMBER:
+                enemy_power += 2000
+            elif t.type == TowerType.GUNSHIP:
+                enemy_power += 1000
+        print(np.sqrt(0.8 * self.farm_stack + rc.get_balance(rc.get_ally_team())), np.sqrt(enemy_power), 10000 + (len(self.map.tiles)*90))
+        if np.sqrt(0.8 * self.farm_stack + rc.get_balance(rc.get_ally_team())) >= np.sqrt(enemy_power) and 0.8 * self.farm_stack + rc.get_balance(rc.get_ally_team()) > 10000 + (len(self.map.tiles)*90):
+            self.sell_farms(rc)
+            self.bum_rush = True
+            self.towers_attack(rc)
+            return
 
         debris = rc.get_debris(rc.get_ally_team())
         badness = 0
