@@ -13,22 +13,28 @@ class BotPlayer(Player):
 
         self.BUMRUSH = False
         self.turn = 0
-        self.goal = 5000
+        self.goal = 4000
         self.trc = RobotController(None, None)
-        self.max_overall_cool = 3
+        self.max_overall_cool = 2
 
-        self.path_length = len(map.path)
+        self.path_length = len(map.path)-1
         self.schedule = {}
         self.send_amounts = {}
         self.damage_amounts = {}
         self.death_time = self.chooose_goal(path_length=self.path_length,goal=self.goal)
-
         self.schedule = {}
         self.send_amounts = {}
         self.damage_amounts = {}
+
+        
+
+        self.damage_scheduled = 0
         
 
         self.attempt_kill(goal_turn=self.death_time,path_length=self.path_length,goal=self.goal)
+        # print(self.schedule)
+        # print(self.send_amounts)
+        # print(self.damage_amounts)
 
         
 
@@ -53,7 +59,7 @@ class BotPlayer(Player):
         total_damage = 0
         turn = 0
         money = 1500
-        while(total_damage < goal and turn < goal_turn):
+        while(total_damage < goal and turn + path_length < goal_turn):
             min_speed = min(self.max_overall_cool,max(1,np.floor((goal_turn - turn) / path_length)))
             max_200_damage = self.get_best_200_debris_cost(min_speed)
             self.damage_amounts[min_speed]=max_200_damage
@@ -94,6 +100,29 @@ class BotPlayer(Player):
 
     
     def play_turn(self, rc: RobotController):
+
+        towers = rc.get_towers(rc.get_enemy_team())
+        if self.turn < 3:
+            pass
+        if self.turn%50 == 3:
+            self.schedule = {}
+            self.send_amounts = {}
+            self.damage_amounts = {}
+            if (len(towers) == 0 or (all([tower.type for tower in towers]) and towers[0].type == TowerType.SOLAR_FARM)):       
+                self.goal = 3200
+                self.max_overall_cool = 8
+            else:    
+                self.goal = 5800
+                self.max_overall_cool = 2
+
+
+            self.death_time = self.chooose_goal(path_length=self.path_length,goal=self.goal)
+            self.schedule = {}
+            self.send_amounts = {}
+            self.damage_amounts = {}
+            self.attempt_kill(goal_turn=self.death_time,path_length=self.path_length,goal=self.goal)
+
+
         # print("hello we are calling")
 
         self.turn+=1
@@ -106,9 +135,11 @@ class BotPlayer(Player):
                 
                 max_200_damage = self.get_best_200_debris_cost(min_speed)
                 min_speed = int(min_speed)                
-                if self.schedule[min_speed] <= self.turn + self.send_amounts[min_speed] and rc.can_send_debris(min_speed,max_200_damage ):
-                    print(self.schedule[min_speed],self.turn ,self.send_amounts[min_speed])
-                    print(f"sending at cooldown {min_speed} for {max_200_damage} impact at time ", self.turn + min_speed * self.path_length)
+                if self.schedule[min_speed] < self.turn + self.send_amounts[min_speed] + 1 and rc.can_send_debris(min_speed,max_200_damage ):
+                    # print(self.schedule[min_speed],self.turn ,self.send_amounts[min_speed])
+                    # print(f"current time {self.turn} sending at cooldown {min_speed} for {max_200_damage} impact at time ", self.turn + min_speed * self.path_length)
+                    self.damage_scheduled+=max_200_damage
+                    # print(f"total scheduled death {self.damage_scheduled}")
                     rc.send_debris(min_speed,max_200_damage)
 
         
