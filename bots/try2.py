@@ -46,26 +46,47 @@ class BotPlayer(Player):
         self.farm_cap = False
         self.farm_reinforce = np.empty((map.height, map.width))
         self.counter = False
+        self.farm_stack = 0
+        self.bum_rush = False
         
     
     def play_turn(self, rc: RobotController):
         if self.first:
             rc.send_debris(15, 190)
             self.first = False
-        if self.counter and rc.get_balance(rc.get_ally_team()) > 580:
-            rc.send_debris(1,85)
-            return
+        # if self.counter and rc.get_balance(rc.get_ally_team()) > 580:
+        #     rc.send_debris(1,85)
+        #     return
         if rc.get_balance(rc.get_ally_team()) < 1000:
             self.towers_attack(rc)
             return 
+        # if self.bum_rush:
+        #     if rc.get_balance(rc.get_ally_team()) > 100000:
+        #         rc.send_debris(4, 501)
+        #     elif rc.get_balance(rc.get_ally_team()) > 2000:
+        #         rc.send_debris(1,151)
+        #     self.towers_attack(rc)
+        #     return
+        
+        # if np.sqrt(0.8 * self.farm_stack + rc.get_balance(rc.get_ally_team())) >= np.sqrt(len(rc.get_towers(rc.get_enemy_team())) * 1500):
+        #     self.sell_farms(rc)
+        #     self.bum_rush = True
+        #     self.towers_attack(rc)
+        #     return
+
         debris = rc.get_debris(rc.get_ally_team())
         badness = 0
         for d in debris:
             badness += d.health * max(21-d.total_cooldown, 1) * self.path[(d.x, d.y)]
             # if d.total_cooldown > self.max_cool:
             #     self.max_cool = d.total_cooldown
-            
         
+        
+        if len(rc.get_towers(rc.get_ally_team())) >= 0.8 * len(self.gun_spots):
+            self.sell_farms(rc)
+            self.bum_rush = True
+            self.towers_attack(rc)
+            return
        
 
         # print(badness / len(self.map.path), self.expected_shots(rc))
@@ -117,7 +138,7 @@ class BotPlayer(Player):
         # else:
             # if rc.get_balance(rc.get_ally_team()) > 250:
             #     rc.send_debris(1, 51)
-        if badness / len(self.map.path) > min(rc.get_health(rc.get_ally_team())/1.5 + self.expected_shots(rc), 2 * self.expected_shots(rc)):
+        if badness / len(self.map.path) > rc.get_health(rc.get_ally_team()) + self.favor_bomb_expec(rc):
             self.sell_farms(rc)
             # for t in rc.get_towers(rc.get_ally_team()):
             #     rc.sell_tower(t)
@@ -199,11 +220,15 @@ class BotPlayer(Player):
                     break
                 if rc.can_build_tower(TowerType.REINFORCER, k[1], k[0]):
                     rc.build_tower(TowerType.REINFORCER, k[1], k[0])
+                    # print(list(map(lambda x: (x.id, x.type),rc.get_towers(rc.get_ally_team()))))
+                    self.farm_stack += 3000
                     self.farm_reinforce[k[0], k[1]] = 1
                     self.farm_pointer -= 1
                 continue
             if rc.can_build_tower(TowerType.SOLAR_FARM, k[1], k[0]):
                 rc.build_tower(TowerType.SOLAR_FARM, k[1], k[0])
+                # print(list(map(lambda x: (x.id, x.type),rc.get_towers(rc.get_ally_team()))))
+                self.farm_stack += 2000
                 self.farm_locs.insert_point((k[1], k[0]))
                 self.farm_pointer -= 1
             else:
@@ -258,6 +283,16 @@ class BotPlayer(Player):
         for k in rc.get_towers(rc.get_ally_team()):
             if k.type == TowerType.BOMBER:
                 expected_bombs += self.bombs[k.y, k.x]/15
+            elif k.type == TowerType.GUNSHIP:
+                expected_snipes += self.gunners[k.y, k.x]/20
+        return expected_snipes * 25 + expected_bombs * 6
+
+    def favor_bomb_expec(self, rc: RobotController):
+        expected_snipes = 0
+        expected_bombs = 0
+        for k in rc.get_towers(rc.get_ally_team()):
+            if k.type == TowerType.BOMBER:
+                expected_bombs += self.bombs[k.y, k.x]**2/15
             elif k.type == TowerType.GUNSHIP:
                 expected_snipes += self.gunners[k.y, k.x]/20
         return expected_snipes * 25 + expected_bombs * 6
