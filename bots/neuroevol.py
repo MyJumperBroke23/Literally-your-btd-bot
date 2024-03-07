@@ -20,6 +20,10 @@ class BotPlayer(Player):
         _, self.bombtiles = self.count_target_tiles_within_radius(map.width, map.height, map.path, 2)
         result, self.sniptiles = self.count_target_tiles_within_radius(map.width, map.height, map.path, 10)
 
+
+
+
+
         print(map.path)
         rem = []
         for i in self.sniptiles:
@@ -46,6 +50,9 @@ class BotPlayer(Player):
         # plt.show()
         self.bestiles = sorted(self.bombtiles.items(), key=lambda item: item[1], reverse=True)
         self.bestsnipes = sorted(self.sniptiles.items(), key=lambda item: item[1], reverse=True)
+
+
+        self.count_target_tiles_within_radius(map.width, map.height, rc.get_towers(rc.get_ally_team()))
         
 
 
